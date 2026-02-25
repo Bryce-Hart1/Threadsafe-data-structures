@@ -3,7 +3,8 @@
 #include <exception>
 #include <thread>
 #include <iostream>
-
+#include <random>
+#include <cstddef>
 
 
 /** @attention locations of all data structures
@@ -43,7 +44,16 @@ namespace threadsafe{
             }
             return false;
         }
-        void moveDown(size_t )
+        void moveDown(size_t ){
+
+        }
+        std::size_t getRandom(std::size_t startInd, std::size_t endInd){
+                std::random_device rd;
+                std::mt19937_64 gen(rd());
+                std::uniform_int_distribution<std::size_t> distrib(startInd, endInd);
+                std::size_t random_size = distrib(gen);
+                return random_size;
+        }
 
 
 
