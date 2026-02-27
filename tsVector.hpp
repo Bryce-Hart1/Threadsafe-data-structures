@@ -4,6 +4,7 @@
 #include <iostream>
 #include <random>
 #include <cstddef>
+
 #include "exceptions.hpp"
 
 /** @attention complete vector implemenation
@@ -47,6 +48,7 @@ namespace threadsafe{
                 v_data[i] = v_data[i+1]
             }
         }
+        //gets random in start to end index. This greatly reduces chance of worst case runtime for quicksort
         std::size_t getRandom(std::size_t startInd, std::size_t endInd){
                 std::random_device rd;
                 std::mt19937_64 gen(rd());
@@ -54,7 +56,13 @@ namespace threadsafe{
                 std::size_t random_size = distrib(gen);
                 return random_size;
         }
+        void parition(){
 
+        }
+
+        void quickSort(){
+
+        }
 
 
         public: 
@@ -74,8 +82,24 @@ namespace threadsafe{
 
         void appendTo(std::size_t indexToAppend){
             try{
-                if(indexToAppend)
+                if(checkIndex(indexToAppend)){
+                }
             }
+        }
+
+        T at(std::size_t indexAt){
+            try{
+                if(checkIndex(indexAt)){
+                    return v_Data[indexAt];
+                }
+            }catch(const std::exception &e){
+                std::cerr << e << '\n';
+            }
+            
+        }
+
+        std::size_t capacity(){
+            return this->v_Capacity;
         }
 
         std::size_t endItr(){
