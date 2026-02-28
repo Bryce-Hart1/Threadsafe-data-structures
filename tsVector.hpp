@@ -1,5 +1,6 @@
 #pragma once
-#include <mutex>
+
+#include<mutex>
 #include <thread>
 #include <iostream>
 #include <random>
@@ -8,8 +9,9 @@
 #include "exceptions.hpp"
 
 /** @attention complete vector implemenation
- * 
- * 
+ * My goal with this project is to provide a completely safe multithreaded vector implemenation with all functions mostly from scratch
+ * tip for later use throw std::out_of_range("index out of range");
+ *
  * 
  */
 
@@ -28,7 +30,8 @@ namespace threadsafe{
         std::size_t v_Size; //also our end iterator
         std::size_t v_Capacity;
         std::size_t v_StartIndex;
-        std::mutex v_Mutex;
+        std::mutex v_SizeMutex;
+        std::mutex v_elementMutex;
         
         //checks if index is in range
         bool checkIndex(size_t index){
@@ -36,6 +39,14 @@ namespace threadsafe{
                 return true;
             }
             return false;
+        }
+
+        T* returnCopy(std::size_t newSize){
+            T* newBlock = new T[newSize]; 
+                for (size_t i = 0; i < v_Size; i++){
+                    newBlock[i] = v_Data[i];
+                }
+                delete[] v_Data; 
         }
 
         /**
@@ -66,15 +77,12 @@ namespace threadsafe{
 
 
         public: 
-        vec(){
-            v_Capacity = 2;
-        }
+        vec() : v_Data(new T[2]), v_Size(0) v_Capacity(2), v_StartIndex(0){}
         /*passing intial size allows for vec size to be set to this*/
-        vec(size_t intial){
-            v_Capacity = intial;
-        }
+        vec(std::size_t capacity) : v_Data(new T[capacity]), v_Size(0), v_Capacity(2), v_StartIndex(0){}
+
         ~vec(){
-            delete T*[];
+            delete[] T* v_Data;
 
 
         }
@@ -101,6 +109,7 @@ namespace threadsafe{
         std::size_t capacity(){
             return this->v_Capacity;
         }
+
 
         std::size_t endItr(){
             return v_Size();
@@ -135,18 +144,28 @@ namespace threadsafe{
 
             }
         }
+
+
+        bool isEmpty(){
+            if(v_Size == 0){
+                return true;
+            }
+            return false;
+        }
         
         //remove last element
         void popBack(){
-            std::unique_lock<std::mutex> v_Mutex;
+            std::unique_lock<std::mutex> lock(v_Mutex);
             this->_Size--;
         }
 
 
         void pushBack(T value){
-            std::unique_lock<std::mutex> v_Mutex;
+            std::unique_lock<std::mutex> lock(v_Mutex);
             if(v_Size == v_Capacity+1){
-                //create new
+                size_t allocateNewSize = (v_Capacity * 2);
+                v_Data = returnCopy();   
+                v_Capacity = allocateNewSize;                
             }
             v_Data[v_Size] = value;
         }
@@ -154,7 +173,7 @@ namespace threadsafe{
         //removes from the index provided
         void remove(std::size_t IndexToRemove){
             std::unique_lock<std::mutex> v_Mutex;
-
+            
         }
         //removes from all indexes from start to finish
         void remove(std::size_t startIndex, std::size_t endIndex){
@@ -170,10 +189,12 @@ namespace threadsafe{
          * @brief simular to shrink to fit for vector. Changes so the array takes up exactly the size in memory
          */
         void shrinkToFit(){
+            std::unique_lock<std::mutex> lock(v_Mutex);
             this->_Capacity = this->_Size;
         }
 
         std::size_t size(){
+            std::unique_lock<std::mutex> lock(v_Mutex);
             return this->v_Size;
         }
 
@@ -196,6 +217,7 @@ namespace threadsafe{
 
         
         void swap(T &dataA, T &dataB){
+            std::unique_lock<std::mutex> lock(v_Mutex);
             T temp = dataA;
             dataA = dataB;
             dataB = temp;
