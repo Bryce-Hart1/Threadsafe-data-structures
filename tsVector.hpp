@@ -16,14 +16,12 @@
 
 
 namespace threadsafe{
-    template <typename T>
+
     /** @class vec
     * threadsafe vector implementation
     * 
-    *
-    *
     */
-    class vec{
+    template <typename T> class vec{
 
         private:
         std::atomic<T*> v_Data;
@@ -33,14 +31,22 @@ namespace threadsafe{
         mutable std::shared_mutex v_realloc_mutex;
         
         //checks if index is in range
-        bool checkIndex(size_t index){
+        bool p_checkIndex(size_t index){
             if(index >= v_StartIndex && index <= v_Size){
                 return true;
             }
             return false;
         }
 
-        T* returnCopy(std::size_t newSize){
+        //overload checking if both indexes are in range
+        bool p_checkIndex(std::size_t index1, std::size_t index2){
+            if(v_StartIndex <= index1 && index1 <= v_Size && v_StartIndex <= index2 && index2 <= v_Size){
+                return true;
+            }
+            return false;
+        }
+
+        T* p_returnCopy(std::size_t newSize){
             T* newBlock = new T[newSize]; 
                 for (size_t i = 0; i < v_Size; i++){
                     newBlock[i] = v_Data[i];
@@ -51,18 +57,21 @@ namespace threadsafe{
         /**
          * @brief private member that moves 
          */
-        void moveLeft(size_t startFrom){
-            std::unique_lock<std::mutex> v_Mutex;
-            //it will erase this front element, that is the startFrom index.
-            for(int i = startFrom; i < this->endItr-1; i++){
-                v_data[i] = v_data[i+1]
+        void p_moveLeft(std::size_t moveOnto){
+            for(int i = moveOnto; i < v_Size-1; i++){
+                v_Data[i] = v_Data[i+1];
             }
         }
-        void moveLeft(std::size_t moveOnto){
-            
+
+        //must already be resized to +1
+        void p_moveRight(std::size_t startFrom){
+            for(int i = 0; i < v_Size; i++){
+                v_Data[i+1] = v_Data[i];
+            }
         }
+
         //gets random in start to end index. This greatly reduces chance of worst case runtime for quicksort
-        std::size_t getRandom(std::size_t startInd, std::size_t endInd){
+        std::size_t p_getRandom(std::size_t startInd, std::size_t endInd){
                 std::random_device rd;
                 std::mt19937_64 gen(rd());
                 std::uniform_int_distribution<std::size_t> distrib(startInd, endInd);
@@ -83,12 +92,20 @@ namespace threadsafe{
 
         }
 
-
+        /**
+         * @brief append a value to the desired index and moves right the index in that position
+         * 
+         */
         void appendTo(std::size_t indexToAppend){
             try{
                 if(checkIndex(indexToAppend)){
-
+                    if(v_Size == v_Capacity){
+                        v_Data = p_returnCopy(v_Capacity * 2);
+                    }
                 }
+                throw std::out_of_range("index out of range");
+            }catch(std::exception &e){
+                std::cerr << e << '\n';
             }
         }
 
@@ -98,7 +115,7 @@ namespace threadsafe{
                     return v_Data[indexAt];
                 }
             }catch(const std::exception &e){
-                std::cerr << e << '\n';
+                
             }
             
         }
@@ -174,7 +191,21 @@ namespace threadsafe{
         }
         //removes from all indexes from start to finish
         void remove(std::size_t startIndex, std::size_t endIndex){
-            
+            std::unique_lock<std::mutex> v_Mutex;
+        }
+
+        /**
+         * @brief overwrites element at desired index
+         */
+        void replace(T value, std::size_t index){
+            try{
+                if(checkIndex(index)){
+                    v_Data[index] = value;
+                }
+                throw std::out_of_range("Index is out of range");
+            }catch(const std::exception &e){
+                std::cerr << e << '\n';
+            }
         }
 
         void resize(std::size_t resizeToSize){
@@ -190,6 +221,7 @@ namespace threadsafe{
             this->_Capacity = this->_Size;
         }
 
+        //returns size of this vec
         std::size_t size(){
             std::unique_lock<std::mutex> lock(v_Mutex);
             return this->v_Size;
@@ -210,7 +242,4 @@ namespace threadsafe{
         }
 
     };
-
-
-
 }
