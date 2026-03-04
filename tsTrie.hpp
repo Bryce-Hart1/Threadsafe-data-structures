@@ -9,6 +9,8 @@
 #include <cassert>
 #include <type_traits>
 #include <iomanip>
+#include <exception>
+#include <iostream>
 namespace threadSafe{
 
 
@@ -29,7 +31,6 @@ class Trie{
 struct mutexLock{
     std::shared_mutex mtx;
 
-
     void unlock(){
         this->mtx.unlock();
     }
@@ -42,6 +43,7 @@ struct mutexLock{
 };
 
 struct spinLock{
+
 
 
     void unlock(){
@@ -92,6 +94,7 @@ struct lockGuard {
         std::unique_ptr<node> v_root;
         std::atomic<std::size_t> v_nodeCount;
         std::atomic<std::size_t> wordCount;
+        std::size_t v_mutexCutoff; 
         void setEndpointTrue(node& n){
 
         }
@@ -115,6 +118,34 @@ struct lockGuard {
             v_root->value = '*';
             v_root->isEndpoint = false;
             //add(intial);
+        }
+
+        Trie(std::size_t HIGH_CONTENTION_CUTOFF){
+            try{
+                if(HIGH_CONTENTION_CUTOFF < 3){
+                    throw std::invalid_argument("HIGH_CONTENTION_CUTOFF cannot be below 2,");
+                }
+                this->v_mutexCutoff = HIGH_CONTENTION_CUTOFF;
+            }catch(const std::exception& error){
+                std::cerr << error.what() << '\n';
+                std::cout << "Trie creation failed" << '\n';
+            }            
+        }
+
+
+        Trie(std::string intial, std::size_t HIGH_CONTENTION_CUTOFF){
+            try{
+                if(HIGH_CONTENTION_CUTOFF < 3){
+                    throw std::invalid_argument("HIGH_CONTENTION_CUTOFF cannot be below 2,");
+                }
+                this->v_mutexCutoff = HIGH_CONTENTION_CUTOFF;
+            }catch(const std::exception& error){
+                std::cerr << error.what() << '\n';
+                std::cout << "Trie creation failed" << '\n';
+            }
+            v_root->value - '*';
+            v_root->isEndpoint = false;
+
         }
 
         bool getIsEndPoint(node thisNode) const{
@@ -163,7 +194,7 @@ struct lockGuard {
                 break;
             }
         }
-        
+        //if not found, create it.
         if(thisChild == nullptr){
             current->childrenNodes.emplace_back(std::make_unique<node>(ch));
             thisChild = current->childrenNodes.back().get();
@@ -180,5 +211,5 @@ struct lockGuard {
         }
 
     }; //end of trie
-
+    std::array<std::string, > 
 }
