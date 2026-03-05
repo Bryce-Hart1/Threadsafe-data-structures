@@ -18,6 +18,11 @@
 
 /**
  * @attention testing of the non tree structures - hashmap, queue, stack, and vec
+ * @details runs through all possible functions from each, non multithreaded. This is due to 
+ * the possible end times of each thread could destroy orignal order, meaning that testing order that 
+ * each operation is finishing is not important. This is subject to changes as I expand this project.
+ * 
+ * 
  * 
  */
 
@@ -27,7 +32,7 @@ void vecPushBack(threadsafe::vec<int> x, int i){
 
 
 //test pushback, clear, shrink to fit and at features and compare the outputs to std::vector
-bool Vector_testOne(threadsafe::vec<int>& x, std::vector<int> y){
+bool Vector_testOne(threadsafe::vec<int>& x, std::vector<int>& y){
     threadsafe::vec<int> name;
     
     const int oneM = 1000000;
@@ -48,13 +53,23 @@ bool Vector_testOne(threadsafe::vec<int>& x, std::vector<int> y){
     }
     x.clear();
     y.clear();
+    x.pushBack(3);
+    y.push_back(3);
     x.shrinkToFit();
     y.shrink_to_fit();
     if(x.size() != y.size()){
         return false;
     }
+}
 
-
+//testing itr methods
+bool Vector_testTwo(threadsafe::vec<int>& x, std::vector<int>& y){
+    threadsafe::vec<int> tempA; 
+    std::vector<int> tempB;
+    tempA.pushBack(4);
+    tempB.push_back(4);
+    tempA.pushBack(9);
+    tempB.push_back(9);
 }
 
 
@@ -100,6 +115,7 @@ bool testMap(){
     std::unordered_map<char, u_int8_t> x;
     threadsafe::hashmap<char, u_int8_t> y;
     
+
 }
 
 

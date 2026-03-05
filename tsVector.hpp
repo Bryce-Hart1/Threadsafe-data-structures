@@ -212,18 +212,6 @@ namespace threadsafe{
             v_Size++;
         }
 
-        void pushBack(vec<t> value){
-            std::shared_lock lock(v_mutex);
-            if(v_Size <= v_Capacity+value.size()){
-                size_t allocateNewSize = (v_Capacity * 2);
-                while(allocateNewSize < (v_Size <= (v_Capacity+value.size())) ){
-                    allocateNewSize *= 2;
-                }
-                v_Data = p_returnCopy(allocateNewSize);
-                v_Capacity = allocateNewSize;
-                v_Size += value.size();
-            }
-        }
 
         //removes from the index provided
         void remove(std::size_t IndexToRemove){
