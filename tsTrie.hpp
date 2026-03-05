@@ -11,7 +11,7 @@
 #include <iomanip>
 #include <exception>
 #include <iostream>
-namespace threadSafe{
+namespace threadsafe{
 
 
 
