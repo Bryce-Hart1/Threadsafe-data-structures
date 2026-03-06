@@ -11,7 +11,13 @@
 #include "tsHashmap.hpp"
 
 #include <functional>
+#include <algorithm>
 
+using i32 = u_int32_t;
+using i16 = u_int16_t;
+using i8 = int8_t;
+using size_t = std::size_t;
+using string = std::string;
 
 
 
@@ -26,13 +32,13 @@
  * 
  */
 
-void vecPushBack(threadsafe::vec<int> x, int i){
+void vecPushBack(threadsafe::vec<i16> x, i16 i){
     x.pushBack(i);
 }
 
 
 //test pushback, clear, shrink to fit and at features and compare the outputs to std::vector
-bool Vector_testOne(threadsafe::vec<int>& x, std::vector<int>& y){
+bool Vector_testOne(threadsafe::vec<i16>& x, std::vector<i16>& y){
     threadsafe::vec<int> name;
     
     const int oneM = 1000000;
@@ -63,13 +69,17 @@ bool Vector_testOne(threadsafe::vec<int>& x, std::vector<int>& y){
 }
 
 //testing itr methods
-bool Vector_testTwo(threadsafe::vec<int>& x, std::vector<int>& y){
-    threadsafe::vec<int> tempA; 
-    std::vector<int> tempB;
+bool Vector_testTwo(threadsafe::vec<i16>& x, std::vector<i16>& y){
+    threadsafe::vec<i16> tempA; 
+    std::vector<i16> tempB;
     tempA.pushBack(4);
     tempB.push_back(4);
     tempA.pushBack(9);
     tempB.push_back(9);
+    tempA.pushBack(1);
+    tempB.push_back(1);
+    std::sort(tempA.startItr(), tempA.endItr());
+    std::sort(tempB.begin(), tempB.end());
 }
 
 
@@ -79,12 +89,15 @@ bool Vector_testTwo(threadsafe::vec<int>& x, std::vector<int>& y){
 bool testVector(){
     using namespace std;
     string p = "In testVector: ";
-    threadsafe::vec<int> tsVector;
-    vector<int> vector;
+    threadsafe::vec<i16> tsVector;
+    vector<i16> vector;
     cout << "size of vector " << sizeof(vector);
     cout << "size of tsVector" << sizeof(tsVector);
     if(!Vector_testOne(tsVector, vector)){
         cout << p <<  "Failed Testone" << endl;
+    }
+    if(!Vector_testTwo(tsVector, vector)){
+        cout << p << "Failed TestTwo" << endl;
     }
     
 
@@ -96,8 +109,8 @@ bool testVector(){
 
 
 bool testQueue(){
-    std::queue<u_int16_t> x;
-    threadsafe::queue<u_int16_t> y;
+    std::queue<i16> x;
+    threadsafe::queue<i16> y;
     
 }
 
@@ -105,15 +118,15 @@ bool testQueue(){
 
 
 bool testStack(){
-    std::stack<u_int16_t> x;
-    threadsafe::stack<u_int16_t> y;
+    std::stack<i16> x;
+    threadsafe::stack<i16> y;
 
 }
 
 
 bool testMap(){
-    std::unordered_map<char, u_int8_t> x;
-    threadsafe::hashmap<char, u_int8_t> y;
+    std::unordered_map<char, i16> x;
+    threadsafe::hashmap<char, i16> y;
     
 
 }
