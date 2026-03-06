@@ -5,9 +5,13 @@
 #include <vector>
 template <typename T>
 using vec = threadsafe::vec<T>;
+using size_t = std::size_t;
+using strView = std::string_view;
+
 /**
- * @attention this class wraps over threadsafe vector 
- * 
+ * @attention this class wraps over threadsafe vector, making a threadsafe hashmap
+ * uses std::hash to make a most types into a string hash, this removed the need for me to import 
+ * any external user made hash function.
  * 
  * 
  * 
@@ -21,46 +25,47 @@ namespace threadsafe{
         friend class std::vector;
         private:
         struct _set{
-            std::string _hashedKey;
+            size_t _hashedKey;
             std::vector<value> _valueArr;
         };
 
         vec<_set> _map;
-        std::size_t _bucketCount;
-        std::size_t _keySize;
-        std::size_t _valueSize;
+        size_t _bucketCount;
+        size_t _keySize;
+        size_t _valueSize;
 
         template <typename T>
-        std::size_t hashBytes(const T& value){
-                static_assert(std::is_trivially_copyable_v<T> "T type (key) must be a parsable type");
-                std::string_view bytes (reinterpret_cast<char*>(&value), sizeof(T));
-            return std::hash<std::string_view>{} value;
+        size_t hashBytes(const T& value){
+            static_assert(std::is_trivially_copyable_v<T> "T type (key) must be a parsable type");
+            strView bytes (reinterpret_cast<char*>(&value), sizeof(T));
+            return std::hash<strView>{} value;
         }
 
         public:
 
-        T at(std::size_t index){
-
+        T at(key k){
+            size_t hashedKey = hashBytes(k);
         }
 
         void clear(){
-
+            _map.clear();
         }
 
         bool find(T key){
+            size_t hashedKey= hashBytes(key);
 
         }
 
         bool isEmpty(){
-
+            return _map.isEmpty();
         }
 
         void insert(key k, value v){
-            std::size_t 
+            size_t hashedKey = hashBytes(k);
         }
 
 
-        std::size_t startInd(){
+        size_t startInd(){
 
         }
 
@@ -69,14 +74,6 @@ namespace threadsafe{
         }
 
     };
-
-
-
-
-
-
-
-
 
 
 
