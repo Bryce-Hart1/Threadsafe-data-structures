@@ -126,18 +126,57 @@ struct node {
             }
         }
 
+        // returns true if the current node should be deleted by its parent
+        bool removeHelper(node* current, const string& word, sizeT depth){
+            if(depth == word.size()){ //base case
+                if(!current->isEndpoint) return false; // word doesn't exist
+        
+                node::lockGuard guard(current->nodeLock);
+                current->isEndpoint = false;
+                current->count = 0;
+        
+                // tell parent to delete us only if we have no children(no other words run through this node)
+                return current->childrenNodes.empty();
+            }
+
+                // find the child matching the next character
+            char ch = word[depth];
+            node* next = findChildNode(*current, ch);
+    
+            if(next == nullptr) return false; // word doesn't exist in trie
+
+            bool shouldDeleteChild = removeHelper(next, word, depth + 1);
+
+            if(shouldDeleteChild){
+                node::lockGuard guard(current->nodeLock);
+                // erase the unique_ptr from the vector, which triggers child's destructor
+                // which cascades down through all of that child's unique_ptr children
+                auto itr = std::find_if(current->childrenNodes.begin(), 
+                               current->childrenNodes.end(),
+                               [ch](const std::unique_ptr<node>& n){ 
+                                   return n->value == ch; 
+                               });
+                if(itr != current->childrenNodes.end()){
+                    current->childrenNodes.erase(itr);
+                }
+            }
+
+            // tell parent to delete us if now a dead non word
+            return !current->isEndpoint && current->childrenNodes.empty();
+            }
+
 
     public:
         //default constructor gets called on root
         Trie(){
             v_root = std::make_unique<node>('*');
+            v_root->isEndpoint = false;
         }
 
         Trie(string intial){
-            v_root = std::make_unique<node>();
-            v_root->value = '*';
-            v_root->isEndpoint = false;
+            Trie();
             add(intial);
+
         }
 
         Trie(sizeT HIGH_CONTENTION_CUTOFF){
@@ -149,7 +188,8 @@ struct node {
             }catch(const std::exception& error){
                 std::cerr << error.what() << '\n';
                 std::cout << "Trie creation failed" << '\n';
-            }            
+            }
+            Trie();            
         }
 
 
@@ -162,14 +202,16 @@ struct node {
             }catch(const std::exception& error){
                 std::cerr << error.what() << '\n';
             }
-            v_root = std::make_unique<node>();
-            v_root->value = '*';
-            v_root->isEndpoint = false;
+            Trie();
+        }
+
+
+        void clear(){
 
         }
 
-        bool getIsEndPoint(node thisNode) const{
-            if(thisNode.isEndpoint){
+        bool getIsEndPoint(node* thisNode) const{
+            if(thisNode->isEndpoint){
                 return true;
             }
             return false;
@@ -181,12 +223,14 @@ struct node {
         }
 
         bool find(string word){
+            node::nodeLock guard(v_root->nodeLock);
             node* current = v_root.get();
             for(char c : word){
                 node* next = findChildNode(*current, c);
                 if(next == nullptr){
                     return false;
                 }
+                current = next;
             }
             if(current->isEndpoint){
             return true;
@@ -206,7 +250,6 @@ struct node {
         }
 
         sizeT getChildCount(node n) const{
-            //n.nodeLock;
             return n.childrenNodes.size();
         }
 
@@ -250,44 +293,44 @@ struct node {
 
     //return false if the remove fails
     optFlag remove(string toRemove){
+        if(!find(toRemove)){
+            return false; // word doesnt exist, do nothing
+        }
+    
+        bool shouldDeleteRoot = removeHelper(v_root.get(), toRemove, 0);
+        if(shouldDeleteRoot){
+            std::cerr << "Warning: remove() attempted to delete root\n";
+            }
+    
+        wordCount.fetch_sub(1);
+        return true;
+        }
 
-        node* current = this->v_root.get();
-        for(char c : toRemove){
-            node* next = findChildNode(*current, c);
-            if(next == nullptr){
+        optFlag remove(string toRemove, bool removeAll){
+            if(!find(toRemove)){
                 return false;
             }
-            current = next;
-        }
-        if(!current->isEndpoint){ //if its not a word do nothing
-            return false;
-        }
-        this->wordCount.fetch_sub(1);
-        current->count--;
-        if(current->count == 0){
-            current->isEndpoint = false;
-        }
-        return true;
-    }
-
-    optFlag remove(string toRemove, bool removeAll){
-
-        node* current = this->v_root.get();
-        for(char c : toRemove){
-            node* next = findChildNode(*current, c);
-            if(next == nullptr){
+    
+            // get the node first so we can grab the count before wiping it
+            node* current = v_root.get();
+            for(char c : toRemove){
+                current = findChildNode(*current, c);
+                if(current == nullptr){
+                    return false;
+                }   
+            }
+            if(!current->isEndpoint){
                 return false;
             }
-            current = next;
+
+            sizeT countToRemove = current->count; // save count before removeHelper wipes it
+    
+            // reuse the same recursive prune logic
+            removeHelper(v_root.get(), toRemove, 0);
+    
+            wordCount.fetch_sub(countToRemove);
+            return true;
         }
-        if(!current->isEndpoint){
-            return false;
-        }
-        this->wordCount.fetch_sub(current->count);
-        current->count = 0;
-        current->isEndpoint = false;
-        return true;
-    }
 
 
     }; //end of trie
