@@ -22,8 +22,9 @@ namespace threadsafe{
 class Trie{
     public:
     /**
+     * @version - 1.0
      * @brief node class is wrapped inside Trie class and not accessable by user
-     * atomic bool to edit value, 
+     * 
      * 
      * uses a hybrid design of spinlocks on deep nodes to save memory, and mutexes on high contention 
      * points in the tree. I have a factory in node to help determine this, with an option to set this within the
@@ -31,6 +32,9 @@ class Trie{
      * There is alot to this class so I will attempt to explain it the best I can:
      * @struct mutexLock a mutex wrapper, used for higher nodes 
      * @struct spinLock is a spinLock as the name suggest 
+     * @struct node acts as its own unit, creates its own lock based on level
+     * @details has methods for adding words, removing words, removing all instances of word, clear entire tree, 
+     * and create vector of all words (returned as a string)
      */   
     struct mutexLock{
         private:
@@ -89,7 +93,7 @@ struct node {
         lockGuard& operator=(const lockGuard&) = delete;
 
         lockGuard(lockGuard&& other) noexcept : _lock(other._lock), _owns(other._owns) {
-            other._owns = false; // transfer ownership, prevent double unlock
+            other._owns = false; //transfer ownership, prevent double unlock
         }
 
             lockGuard& operator=(lockGuard&&) = delete;
@@ -192,9 +196,12 @@ struct node {
                 add(initial);
         }
 
-
+        //deletes all of roots children
         void clear(){
-
+            node::lockGuard guard(v_root->nodeLock);
+            v_root.get()->childrenNodes.clear(); //clear the vec and the children go out of scope
+            wordCount.store(0);
+            v_nodeCount.store(0);
         }
 
         bool getIsEndPoint(node* thisNode) const{
