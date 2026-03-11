@@ -64,9 +64,10 @@ namespace threadsafe{
         /**
          * @brief private member that moves ontop of index provided. 
          * ex: [1] [2] [3]
-         * provide 2
+         * provide 1 (index 1)
          * : [1] [3] [3]
          * must condense size by one to compensate for this
+         * 
          */
         void p_moveLeft(std::size_t moveOnto){
             for(int i = moveOnto; i < v_Size-1; i++){
@@ -76,11 +77,16 @@ namespace threadsafe{
 
 
         /**
-         * @brief overload helper for remove, removes all elements from onto to the end of the 
+         * @brief overload helper for remove, removes all elements from onto to the end index of the 
          * gap. This overload helps us do one loop instead of several
          */
         void p_removeOverloadHelper(std::size_t start, std::size_t end){
-            //still needs implemented
+            size_t grabFrom = end+1;
+            while(grabFrom <= v_Size){
+                data[start] = data[grabFrom];
+                start++;
+                grabFrom++;
+            }
         }
 
         //must already be resized to +1, and the startFrom index will exist twice, once at i = 0, and i = 1
@@ -250,7 +256,8 @@ namespace threadsafe{
             std::shared_lock lock(v_mutex);
             try{
                 if(p_checkIndex(startIndex, endIndex)){
-
+                    p_removeOverloadHelper(startIndex, endIndex);
+                    v_Size -= (endIndex - startIndex);
                 }
                 throw std::out_of_range("Index is out of range in Remove(start, end)");
             }catch(const std::exception &e){
@@ -284,6 +291,7 @@ namespace threadsafe{
          */
         void shrinkToFit(){
             std::shared_lock lock(v_mutex);
+            p_moveLeft()
             this->v_Capacity = this->v_Size;
         }
 
