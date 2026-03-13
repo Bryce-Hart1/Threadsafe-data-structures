@@ -67,7 +67,8 @@ namespace threadsafe{
          * provide 1 (index 1)
          * : [1] [3] [3]
          * must condense size by one to compensate for this
-         * 
+         * size = 2
+         * [1] [3]
          */
         void p_moveLeft(std::size_t moveOnto){
             for(int i = moveOnto; i < v_Size-1; i++){
