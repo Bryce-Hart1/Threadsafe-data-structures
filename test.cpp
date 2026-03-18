@@ -1,7 +1,7 @@
 #include "tsVector.hpp"
 #include <vector>
 
-//#include "tsQueue.hpp"
+#include "tsQueue.hpp"
 #include <queue>
 
 //#include "tsStack.hpp"
@@ -28,12 +28,21 @@ using string = std::string;
  * the possible end times of each thread could destroy orignal order, meaning that testing order that 
  * each operation is finishing is not important. This is subject to changes as I expand this project.
  * 
- * 
- * 
  */
 
-void vecPushBack(threadsafe::vec<i16>& x, i16 i){
 
+//used a variadic template to ignore other arguments from std vector
+template<template <typename...> class Container, typename Type, typename... Args>
+void printContainer(const Container<Type, Args...>& c) {
+    std::cout << "[";
+    for (size_t i = 0; i < c.size(); i++) {
+        std::cout << c.at(i) << ", ";
+    }
+    std::cout << "]";
+}
+
+void vecPushBack(threadsafe::vec<i16>& x, i16 i){
+    
 }
 
 //show size dif
@@ -41,6 +50,12 @@ bool Vector_testOne(threadsafe::vec<i16>& x, std::vector<i16>& y){
     std::cout << "Size of threadsafe: " << sizeof(x) << std::endl;
     std::cout << "Size of vector: " << sizeof(y) << std::endl;
     return true;
+}
+
+//visualize 
+bool Vector_testTwo(const threadsafe::vec<i16>& x, const std::vector<i16>& y){
+    printContainer(x);
+    printContainer(y);
 }
 
 
@@ -95,7 +110,7 @@ bool Vector_testFive(threadsafe::vec<i16>& x, std::vector<i16>& y){
     return true;
 }
 
-// tests isEmpty() before and after pushing
+//tests isEmpty before and after pushing
 bool Vector_testSix(threadsafe::vec<i16>& x, std::vector<i16>& y){
     if(!x.isEmpty() || !y.empty()){
         return false;
@@ -113,7 +128,6 @@ bool Vector_testSix(threadsafe::vec<i16>& x, std::vector<i16>& y){
 //tests capacity grows
 bool Vector_testSeven(threadsafe::vec<i16>& x, std::vector<i16>& y){
     size_t initialCapacity = x.capacity();
-    // push enough to force a realloc (initial capacity is 2)
     for(i16 i = 0; i < 50; i++){
         x.pushBack(i);
         y.push_back(i);
@@ -196,7 +210,7 @@ bool testVector(){
     vector<i16> stdVector;
 
     if(!Vector_testOne(tsVector, stdVector))   cout << p << "Failed TestOne"   << endl;
-    //if(!Vector_testTwo(tsVector, stdVector))   cout << p << "Failed TestTwo"   << endl;
+    if(!Vector_testTwo(tsVector, stdVector))   cout << p << "Failed TestTwo"   << endl;
     if(!Vector_testThree(tsVector, stdVector)) cout << p << "Failed TestThree" << endl;
     if(!Vector_testFour(tsVector, stdVector))  cout << p << "Failed TestFour"  << endl;
     if(!Vector_testFive(tsVector, stdVector))  cout << p << "Failed TestFive"  << endl;
@@ -215,7 +229,7 @@ bool testVector(){
 
 bool testQueue(){
     std::queue<i16> x;
-    //threadsafe::queue<i16> y;
+    threadsafe::queue<i16> y;
     
 }
 
